@@ -23,7 +23,7 @@ import com.example.inventory.data.AppDataContainer
 class InventoryApplication : Application() {
 
     /**
-     * AppContainer instance used by the rest of classes to obtain dependencies
+     * Экземпляр AppContainer, используемый остальными классами для получения зависимостей
      */
     lateinit var container: AppContainer
 

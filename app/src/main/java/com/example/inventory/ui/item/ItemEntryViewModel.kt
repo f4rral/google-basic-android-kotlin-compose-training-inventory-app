@@ -21,43 +21,56 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.inventory.data.Item
+import com.example.inventory.data.ItemsRepository
 import java.text.NumberFormat
 
 /**
- * ViewModel to validate and insert items in the Room database.
+ * ViewModel для проверки и вставки элементов в базу данных Room.
  */
-class ItemEntryViewModel : ViewModel() {
+class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
 
     /**
-     * Holds current item ui state
+     * Сохраняет текущее состояние пользовательского интерфейса элемента
      */
     var itemUiState by mutableStateOf(ItemUiState())
         private set
 
     /**
-     * Updates the [itemUiState] with the value provided in the argument. This method also triggers
-     * a validation for input values.
+     * Обновляет [itemUiState] значением, указанным в аргументе. Этот метод также запускает
+     * проверку входных значений.
      */
     fun updateUiState(itemDetails: ItemDetails) {
         itemUiState =
             ItemUiState(itemDetails = itemDetails, isEntryValid = validateInput(itemDetails))
     }
 
+    /**
+     * Функцию для проверки ввода пользователя перед добавлением или обновлением сущности в базе данных
+     */
     private fun validateInput(uiState: ItemDetails = itemUiState.itemDetails): Boolean {
         return with(uiState) {
             name.isNotBlank() && price.isNotBlank() && quantity.isNotBlank()
         }
     }
+
+    suspend fun saveItem() {
+        if (validateInput()) {
+            itemsRepository.insertItem(itemUiState.itemDetails.toItem())
+        }
+    }
 }
 
 /**
- * Represents Ui State for an Item.
+ * Состояние пользовательского интерфейса для элемента.
  */
 data class ItemUiState(
     val itemDetails: ItemDetails = ItemDetails(),
     val isEntryValid: Boolean = false
 )
 
+/**
+ * Класс данных для одного элемент.
+ */
 data class ItemDetails(
     val id: Int = 0,
     val name: String = "",
@@ -66,9 +79,9 @@ data class ItemDetails(
 )
 
 /**
- * Extension function to convert [ItemDetails] to [Item]. If the value of [ItemDetails.price] is
- * not a valid [Double], then the price will be set to 0.0. Similarly if the value of
- * [ItemDetails.quantity] is not a valid [Int], then the quantity will be set to 0
+ * Функция расширения для преобразования [ItemDetails] в [Item]. Если значение [ItemDetails.price]
+ * не является допустимым [Double], то цена будет установлена на 0.0. Аналогично, если значение
+ * [ItemDetails.quantity] не является допустимым [Int], то количество будет установлено на 0
  */
 fun ItemDetails.toItem(): Item = Item(
     id = id,
@@ -82,7 +95,7 @@ fun Item.formatedPrice(): String {
 }
 
 /**
- * Extension function to convert [Item] to [ItemUiState]
+ * Функция расширения для преобразования [Item] в [ItemUiState]
  */
 fun Item.toItemUiState(isEntryValid: Boolean = false): ItemUiState = ItemUiState(
     itemDetails = this.toItemDetails(),
@@ -90,7 +103,7 @@ fun Item.toItemUiState(isEntryValid: Boolean = false): ItemUiState = ItemUiState
 )
 
 /**
- * Extension function to convert [Item] to [ItemDetails]
+ * Функция расширения для преобразования [Item] в [ItemDetails]
  */
 fun Item.toItemDetails(): ItemDetails = ItemDetails(
     id = id,
